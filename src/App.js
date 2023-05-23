@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { Button, Card, Col, Form, Row } from "react-bootstrap";
-import {loadStripe} from '@stripe/stripe-js';
+import { Alert, Button, Card, Col, Form, Row } from "react-bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import logo from "./logo.svg";
 import "./App.css";
@@ -16,116 +15,145 @@ const GetIPAddress = async () => {
   return data.ip;
 };
 
-function App() {
-  console.log(sUsrAg);
-  GetIPAddress().then((ip) => {
-    console.log(ip);
-  });
+const StatusMessage = (message, variant) => {
+  return (
+    <>
+      <Alert variant={variant}>{message}</Alert>
+    </>
+  );
+};
 
+function App() {
+  const [message, setMessage] = useState("");
+  const [variant, setVariant] = useState("");
   const [formData, setFormData] = useState({
     connectAccountId: "",
-    publishableKey: "",
     secretKey: "",
+    termsOfService: false,
   });
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
-    const stripe = loadStripe('pk_test_51KeQbeBb7TlDnEKpn0eU2rkJatF99JNq9aLUQrLcIBFhN03TSakmyeFx3QqjZGrRQ6YNvHC02SKZaZBzR1JFKk2M00x0t8UYi5');
-    if (!stripe) {
-      // Stripe.js hasn't yet loaded.
-      // Make sure to disable form submission until Stripe.js has loaded.
-      return;
-    }
+    setMessage("Please wait...");
+    setVariant("");
+    // Load the Stripe library
+    const stripe = require("stripe")(formData.secretKey);
+    if (!stripe) return;
+
+    const userIp = await GetIPAddress();
+    const acceptanceDate = Math.floor(Date.now() / 1000);
+
+    const payload = {
+      tos_acceptance: {
+        date: acceptanceDate,
+        ip: userIp,
+        user_agent: sUsrAg,
+      },
+      settings: {
+        card_issuing: {
+          tos_acceptance: {
+            date: acceptanceDate,
+            ip: userIp,
+            user_agent: sUsrAg,
+          },
+        },
+      },
+    };
+
+    await stripe.accounts
+      .update(formData.connectAccountId, payload)
+      .then((account) => {
+        setMessage("Success!");
+        setVariant("success");
+        console.log(account.lastResponse);
+      })
+      .catch((err) => {
+        setMessage(err.message);
+        setVariant("danger");
+        console.log(err.message);
+      });
   };
 
   return (
-    <Row>
-      <Col sm="6" className="mx-auto w-75 mt-5">
-        <Card body>
-          <Card.Title tag="h5">Stripe Terms of Service</Card.Title>
-          <Card.Text></Card.Text>
-          <Form>
-            <Form.Group className="mb-3" controlId="connectAccountId">
-              <Form.Label>Connect Account ID</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter Connect Account ID"
-              />
-              <Form.Text
-                className="text-muted"
-                name="connectAccountId"
-                onChange={(e) =>
-                  setFormData({ ...formData, [e.target.name]: e.target.value })
+    <>
+      <Row>
+        <Col sm="6" className="mx-auto w-75 mt-5">
+          <Card body>
+            <Card.Title tag="h5">Stripe Terms of Service</Card.Title>
+            <Card.Text></Card.Text>
+            <Form>
+              <Form.Group className="mb-3" controlId="connectAccountId">
+                <Form.Label>Connect Account ID</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="acct_1..."
+                  name="connectAccountId"
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      [e.target.name]: e.target.value,
+                    })
+                  }
+                  required
+                />
+              </Form.Group>
+              <Form.Group className="mb-3" controlId="secretKey">
+                <Form.Label>Secret Key</Form.Label>
+                <Form.Control
+                  type="password"
+                  placeholder="sk_live_"
+                  name="secretKey"
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      [e.target.name]: e.target.value,
+                    })
+                  }
+                  required
+                />
+                <Form.Text className="text-muted">
+                  This form does not save any information!
+                </Form.Text>
+              </Form.Group>
+              <Form.Group className="mb-3" controlId="termsOfService">
+                <Form.Check
+                  type="checkbox"
+                  name="termsOfService"
+                  label="User accepts Stripe's Terms of Service and Privacy Policy"
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      [e.target.name]: e.target.checked,
+                    })
+                  }
+                  required
+                />
+              </Form.Group>
+              <Button
+                style={{ backgroundColor: "#635BFF" }}
+                disabled={
+                  !formData.secretKey ||
+                  !formData.connectAccountId ||
+                  !formData.termsOfService
                 }
+                onClick={(e) => handleSubmit(e)}
               >
-                This form does not save any information!
-              </Form.Text>
-            </Form.Group>
-            <Form.Group className="mb-3" controlId="publishableKey">
-              <Form.Label>Publishable Key</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="pk_live_"
-              />
-              <Form.Text
-                className="text-muted"
-                name="publishableKey"
-                onChange={(e) =>
-                  setFormData({ ...formData, [e.target.name]: e.target.value })
-                }
-              >
-                This form does not save any information!
-              </Form.Text>
-            </Form.Group>
-            <Form.Group className="mb-3" controlId="secretKey">
-              <Form.Label>Secret Key</Form.Label>
-              <Form.Control
-                type="password"
-                placeholder="sk_live_"
-                name="secretKey"
-                onChange={(e) =>
-                  setFormData({ ...formData, [e.target.name]: e.target.value })
-                }
-              />
-            </Form.Group>
-            <Form.Group className="mb-3" controlId="formBasicCheckbox">
-              <Form.Check
-                type="checkbox"
-                label="User accepts Stripe's Terms of Service and Privacy Policy"
-              />
-            </Form.Group>
-            <Button 
-              style={{ backgroundColor: "#635BFF" }}  
-              onClick={(e) => handleSubmit(e)}>
-              Submit
-            </Button>
-          </Form>
-        </Card>
-      </Col>
-    </Row>
-  );
-}
+                Submit
+              </Button>
+            </Form>
+          </Card>
+        </Col>
+      </Row>
 
-{
-  /*
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  */
+      {message && (
+        <Row>
+          <Col sm="6" className="mx-auto w-75 mt-3">
+            {StatusMessage(message, variant)}
+          </Col>
+        </Row>
+      )}
+    </>
+  );
 }
 
 export default App;
