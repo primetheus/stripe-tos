@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/stripe-tos/static/css/main.1cb591bb.css",
+    "main.js": "/stripe-tos/static/js/main.3236d279.js",
+    "static/js/787.784fdc07.chunk.js": "/stripe-tos/static/js/787.784fdc07.chunk.js",
+    "static/media/logo.svg": "/stripe-tos/static/media/logo.6ce24c58023cc2f8fd88fe9d219db6c6.svg",
+    "index.html": "/stripe-tos/index.html",
+    "main.1cb591bb.css.map": "/stripe-tos/static/css/main.1cb591bb.css.map",
+    "main.3236d279.js.map": "/stripe-tos/static/js/main.3236d279.js.map",
+    "787.784fdc07.chunk.js.map": "/stripe-tos/static/js/787.784fdc07.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.1cb591bb.css",
+    "static/js/main.3236d279.js"
+  ]
+}
